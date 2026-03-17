@@ -1,0 +1,14 @@
+.dart_tool/
+android/
+ios/
+macos/
+linux/
+windows/
+build/app/
+build/macos/
+build/ios/
+build/windows/
+build/linux/
+build/test_cache/
+build/*.dill
+.pub-cache/

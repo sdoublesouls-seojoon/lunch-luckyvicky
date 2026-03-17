@@ -1,0 +1,11 @@
+{
+  "buildCommand": "",
+  "outputDirectory": "build/web",
+  "installCommand": "echo 'no install needed'",
+  "git": {
+    "deploymentEnabled": false
+  },
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
