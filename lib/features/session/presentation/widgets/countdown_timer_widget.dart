@@ -61,11 +61,11 @@ class _CountdownTimerWidgetState extends State<CountdownTimerWidget> {
   Widget build(BuildContext context) {
     if (_timeoutTriggered) {
       return const Text(
-        '시간 초과!',
+        '자동 수락됨 ✓',
         style: TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.bold,
-          color: Colors.red,
+          color: Colors.green,
         ),
       );
     }

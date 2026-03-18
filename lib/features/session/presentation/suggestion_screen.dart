@@ -218,12 +218,10 @@ class SuggestionScreen extends ConsumerWidget {
                           onTimeout: () {
                             ref
                                 .read(sessionRepositoryProvider)
-                                .vetoRestaurant(
+                                .acceptRestaurant(
                                   currentGroupId!,
                                   session.id,
                                   user!.uid,
-                                  '시간 초과', // Reason
-                                  restaurants,
                                 );
                           },
                         ),
