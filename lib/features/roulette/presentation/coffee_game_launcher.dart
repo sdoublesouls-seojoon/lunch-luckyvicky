@@ -35,8 +35,8 @@ Future<void> startCoffeeGame(
     final data = json.decode(response.body);
     final roomCode = data['code'] as String;
 
-    // 2. Firestore에 방 코드 저장 (설정한 유저 ID 포함)
-    final gameUrl = '$luckyLatteClientUrl/quick?code=$roomCode';
+    // 2. Firestore에 방 코드 저장 (설정한 유저 ID + groupId 포함)
+    final gameUrl = '$luckyLatteClientUrl/quick?code=$roomCode&groupId=$groupId';
     await ref
         .read(rouletteRepositoryProvider)
         .setGameUrl(groupId, gameUrl, userId ?? '');
