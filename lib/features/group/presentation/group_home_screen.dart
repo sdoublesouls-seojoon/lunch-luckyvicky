@@ -1,9 +1,12 @@
+import 'dart:js_interop';
 import 'dart:ui';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:web/web.dart' as web;
 import 'package:lunch_lucky/features/auth/data/auth_repository.dart';
 import 'package:lunch_lucky/features/group/domain/restaurant.dart';
 import 'package:lunch_lucky/features/group/data/geocoding_service.dart';
@@ -1122,7 +1125,11 @@ class _HomeTabBody extends ConsumerWidget {
 
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (context.mounted) {
-            launchUrl(myUrl, mode: LaunchMode.externalApplication);
+            if (kIsWeb) {
+              web.window.open(myUrl.toString(), '_blank');
+            } else {
+              launchUrl(myUrl, mode: LaunchMode.externalApplication);
+            }
           }
         });
       }

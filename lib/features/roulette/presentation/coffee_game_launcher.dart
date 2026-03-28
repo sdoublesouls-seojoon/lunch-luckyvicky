@@ -1,8 +1,11 @@
 import 'dart:convert';
+import 'dart:js_interop';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
+import 'package:web/web.dart' as web;
 import 'package:lunch_lucky/features/roulette/presentation/roulette_providers.dart';
 
 // Lucky Latte server/client URLs (로컬 테스트용, 배포 시 변경)
@@ -44,10 +47,15 @@ Future<void> startCoffeeGame(
     // 3. 호스트도 같은 URL로 이동 (닉네임 포함)
     final hostUrl = '$gameUrl&nickname=${Uri.encodeComponent(nickname)}';
     if (context.mounted) {
-      await launchUrl(
-        Uri.parse(hostUrl),
-        mode: LaunchMode.externalApplication,
-      );
+      if (kIsWeb) {
+        // window.open()으로 열어야 나중에 window.close()가 동작함
+        web.window.open(hostUrl, '_blank');
+      } else {
+        await launchUrl(
+          Uri.parse(hostUrl),
+          mode: LaunchMode.externalApplication,
+        );
+      }
     }
   } catch (e) {
     if (context.mounted) {
