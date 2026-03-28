@@ -6,8 +6,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:lunch_lucky/features/roulette/presentation/roulette_providers.dart';
 
 // Lucky Latte server/client URLs (로컬 테스트용, 배포 시 변경)
-const luckyLatteServerUrl = 'http://localhost:8080';
-const luckyLatteClientUrl = 'http://localhost:8888';
+const luckyLatteServerUrl = 'https://lucky-latte.onrender.com';
+const luckyLatteClientUrl = 'https://lucky-latte.vercel.app';
 
 Future<void> startCoffeeGame(
   BuildContext context,
