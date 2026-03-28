@@ -1197,7 +1197,6 @@ class _HomeTabBody extends ConsumerWidget {
                       ? null
                       : () async {
                           if (isSessionActiveOrLoading) {
-                            // If a session is already active, just join it
                             context.push('/session');
                             return;
                           }
@@ -1208,7 +1207,6 @@ class _HomeTabBody extends ConsumerWidget {
                             }
                             return;
                           }
-
                           final members =
                               ref.read(currentGroupMembersProvider).value ?? [];
                           final restaurants =
