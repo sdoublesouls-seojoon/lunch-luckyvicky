@@ -1057,9 +1057,11 @@ class _HomeTabBody extends ConsumerWidget {
       previous,
       next,
     ) {
-      final prevStatus = previous?.value?.status;
+      // 최초 로드(previous가 null 또는 loading)이면 무시
+      if (previous == null || !previous.hasValue) return;
+      final prevStatus = previous.value?.status;
       final nextStatus = next.value?.status;
-      // 상태 변화가 없으면 무시 (최초 로드 시 오래된 Firestore 상태로 인한 이동 방지)
+      // 상태 변화가 없으면 무시
       if (prevStatus == nextStatus) return;
 
       if (next.hasValue &&
@@ -1091,7 +1093,9 @@ class _HomeTabBody extends ConsumerWidget {
       previous,
       next,
     ) {
-      final prevGameUrl = previous?.value?.gameUrl;
+      // 최초 로드 무시
+      if (previous == null || !previous.hasValue) return;
+      final prevGameUrl = previous.value?.gameUrl;
       final nextGameUrl = next.value?.gameUrl;
       // Only react to NEW gameUrl (not already set)
       if (nextGameUrl != null &&
