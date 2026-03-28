@@ -1199,11 +1199,6 @@ class _HomeTabBody extends ConsumerWidget {
                           }
 
                           if (shouldShowDessertDraw) {
-                            // Sync all users to roulette screen
-                            await ref
-                                .read(rouletteRepositoryProvider)
-                                .readyRoulette(groupId);
-
                             if (context.mounted) {
                               _showGameChoiceDialog(context, ref);
                             }
@@ -3405,9 +3400,16 @@ void _showGameChoiceDialog(BuildContext context, WidgetRef ref) {
       content: const Text('어떤 방식으로 후식 내기를 할까요?'),
       actions: [
         TextButton(
-          onPressed: () {
+          onPressed: () async {
             Navigator.pop(ctx);
-            context.push('/roulette');
+            if (groupId != null) {
+              await ref
+                  .read(rouletteRepositoryProvider)
+                  .readyRoulette(groupId);
+            }
+            if (context.mounted) {
+              context.push('/roulette');
+            }
           },
           child: const Text('룰렛 (기본)'),
         ),

@@ -66,10 +66,6 @@ class SuggestionScreen extends ConsumerWidget {
                   await ref
                       .read(groupRepositoryProvider)
                       .resetGroupVetoCounts(session.groupId);
-                  // 룰렛 ready 상태로 동기화
-                  await ref
-                      .read(rouletteRepositoryProvider)
-                      .readyRoulette(session.groupId);
                   if (context.mounted) {
                     _showGameChoiceDialog(context, ref);
                   }
@@ -387,9 +383,16 @@ class SuggestionScreen extends ConsumerWidget {
         content: const Text('어떤 방식으로 후식 내기를 할까요?'),
         actions: [
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(ctx);
-              context.go('/roulette');
+              if (groupId != null) {
+                await ref
+                    .read(rouletteRepositoryProvider)
+                    .readyRoulette(groupId);
+              }
+              if (context.mounted) {
+                context.go('/roulette');
+              }
             },
             child: const Text('룰렛 (기본)'),
           ),
