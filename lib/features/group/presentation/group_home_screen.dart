@@ -1052,7 +1052,7 @@ class _HomeTabBody extends ConsumerWidget {
       }
     });
 
-    // Auto-navigate to roulette screen if someone starts spinning or enters it
+    // Auto-navigate to roulette screen if someone starts spinning or readies
     ref.listen<AsyncValue<RouletteState>>(rouletteStateProvider, (
       previous,
       next,
