@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lunch_lucky/features/auth/data/auth_repository.dart';
 import 'package:lunch_lucky/features/group/presentation/group_providers.dart';
 import 'package:lunch_lucky/features/roulette/presentation/roulette_providers.dart';
+import 'package:lunch_lucky/features/roulette/presentation/coffee_game_launcher.dart';
 import 'package:lunch_lucky/features/session/presentation/menu_selection_view.dart';
 import 'package:lunch_lucky/features/session/presentation/session_providers.dart';
 import 'package:lunch_lucky/features/session/presentation/widgets/countdown_timer_widget.dart';
@@ -70,7 +71,7 @@ class SuggestionScreen extends ConsumerWidget {
                       .read(rouletteRepositoryProvider)
                       .readyRoulette(session.groupId);
                   if (context.mounted) {
-                    context.go('/roulette');
+                    _showGameChoiceDialog(context, ref);
                   }
                 }
               },
@@ -370,6 +371,40 @@ class SuggestionScreen extends ConsumerWidget {
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, st) => Center(child: Text('오류: $e')),
+      ),
+    );
+  }
+
+  void _showGameChoiceDialog(BuildContext context, WidgetRef ref) {
+    final user = ref.read(authStateChangesProvider).value;
+    final nickname = user?.displayName ?? '게스트';
+    final groupId = ref.read(currentGroupIdProvider);
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('후식 내기'),
+        content: const Text('어떤 방식으로 후식 내기를 할까요?'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              context.go('/roulette');
+            },
+            child: const Text('룰렛 (기본)'),
+          ),
+          FilledButton.icon(
+            icon: const Icon(Icons.open_in_new, size: 18),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              if (groupId == null) return;
+              final user = ref.read(authStateChangesProvider).value;
+              await startCoffeeGame(context, ref, groupId, nickname,
+                  userId: user?.uid);
+            },
+            label: const Text('커피 게임 (Lucky Latte)'),
+          ),
+        ],
       ),
     );
   }

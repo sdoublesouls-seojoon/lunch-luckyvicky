@@ -3,12 +3,18 @@ class RouletteState {
   final String? winnerId;
   final double? targetRotation;
   final DateTime? spinStartedAt;
+  final String? gameUrl;
+  final DateTime? gameUrlSetAt;
+  final String? gameUrlSetBy;
 
   const RouletteState({
     required this.status,
     this.winnerId,
     this.targetRotation,
     this.spinStartedAt,
+    this.gameUrl,
+    this.gameUrlSetAt,
+    this.gameUrlSetBy,
   });
 
   factory RouletteState.fromMap(Map<String, dynamic> map) {
@@ -19,6 +25,11 @@ class RouletteState {
       spinStartedAt: map['spinStartedAt'] != null
           ? DateTime.parse(map['spinStartedAt'])
           : null,
+      gameUrl: map['gameUrl'],
+      gameUrlSetAt: map['gameUrlSetAt'] != null
+          ? DateTime.parse(map['gameUrlSetAt'])
+          : null,
+      gameUrlSetBy: map['gameUrlSetBy'],
     );
   }
 
@@ -28,6 +39,9 @@ class RouletteState {
       'winnerId': winnerId,
       'targetRotation': targetRotation,
       'spinStartedAt': spinStartedAt?.toIso8601String(),
+      'gameUrl': gameUrl,
+      'gameUrlSetAt': gameUrlSetAt?.toIso8601String(),
+      'gameUrlSetBy': gameUrlSetBy,
     };
   }
 
@@ -36,12 +50,18 @@ class RouletteState {
     String? winnerId,
     double? targetRotation,
     DateTime? spinStartedAt,
+    String? gameUrl,
+    DateTime? gameUrlSetAt,
+    String? gameUrlSetBy,
   }) {
     return RouletteState(
       status: status ?? this.status,
       winnerId: winnerId ?? this.winnerId,
       targetRotation: targetRotation ?? this.targetRotation,
       spinStartedAt: spinStartedAt ?? this.spinStartedAt,
+      gameUrl: gameUrl ?? this.gameUrl,
+      gameUrlSetAt: gameUrlSetAt ?? this.gameUrlSetAt,
+      gameUrlSetBy: gameUrlSetBy ?? this.gameUrlSetBy,
     );
   }
 }

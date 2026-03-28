@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:lunch_lucky/features/auth/data/auth_repository.dart';
 import 'package:lunch_lucky/features/group/domain/restaurant.dart';
 import 'package:lunch_lucky/features/group/data/geocoding_service.dart';
@@ -12,6 +13,7 @@ import 'package:lunch_lucky/features/session/presentation/session_providers.dart
 import 'package:lunch_lucky/features/session/domain/session.dart';
 import 'package:lunch_lucky/features/roulette/presentation/roulette_providers.dart';
 import 'package:lunch_lucky/features/roulette/domain/roulette_state.dart';
+import 'package:lunch_lucky/features/roulette/presentation/coffee_game_launcher.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 
 class GroupHomeScreen extends ConsumerStatefulWidget {
@@ -1084,6 +1086,44 @@ class _HomeTabBody extends ConsumerWidget {
       }
     });
 
+    // Auto-navigate to Lucky Latte when gameUrl is set by another member
+    ref.listen<AsyncValue<RouletteState>>(rouletteStateProvider, (
+      previous,
+      next,
+    ) {
+      final prevGameUrl = previous?.value?.gameUrl;
+      final nextGameUrl = next.value?.gameUrl;
+      // Only react to NEW gameUrl (not already set)
+      if (nextGameUrl != null &&
+          nextGameUrl.isNotEmpty &&
+          prevGameUrl != nextGameUrl) {
+        // Skip if this user is the one who set the URL
+        final currentUser = ref.read(authStateChangesProvider).value;
+        final setBy = next.value?.gameUrlSetBy;
+        if (currentUser != null && setBy == currentUser.uid) {
+          return;
+        }
+
+        // Check staleness: only navigate if set within last 60 seconds
+        final setAt = next.value?.gameUrlSetAt;
+        if (setAt != null) {
+          final elapsed = DateTime.now().difference(setAt);
+          if (elapsed.inSeconds > 60) return;
+        }
+
+        // Build personal URL with current user's nickname
+        final user = ref.read(authStateChangesProvider).value;
+        final myNickname = user?.displayName ?? '게스트';
+        final myUrl = buildPersonalGameUrl(nextGameUrl, myNickname);
+
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (context.mounted) {
+            launchUrl(myUrl, mode: LaunchMode.externalApplication);
+          }
+        });
+      }
+    });
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -1165,7 +1205,7 @@ class _HomeTabBody extends ConsumerWidget {
                                 .readyRoulette(groupId);
 
                             if (context.mounted) {
-                              context.push('/roulette');
+                              _showGameChoiceDialog(context, ref);
                             }
                             return;
                           }
@@ -3352,3 +3392,37 @@ Future<GeocodingResult?> _showLocationPicker(
     },
   );
 }
+
+void _showGameChoiceDialog(BuildContext context, WidgetRef ref) {
+  final user = ref.read(authStateChangesProvider).value;
+  final nickname = user?.displayName ?? '게스트';
+  final groupId = ref.read(currentGroupIdProvider);
+
+  showDialog(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('후식 내기'),
+      content: const Text('어떤 방식으로 후식 내기를 할까요?'),
+      actions: [
+        TextButton(
+          onPressed: () {
+            Navigator.pop(ctx);
+            context.push('/roulette');
+          },
+          child: const Text('룰렛 (기본)'),
+        ),
+        FilledButton.icon(
+          icon: const Icon(Icons.open_in_new, size: 18),
+          onPressed: () async {
+            Navigator.pop(ctx);
+            if (groupId == null) return;
+            await startCoffeeGame(context, ref, groupId, nickname,
+                userId: user?.uid);
+          },
+          label: const Text('커피 게임 (Lucky Latte)'),
+        ),
+      ],
+    ),
+  );
+}
+

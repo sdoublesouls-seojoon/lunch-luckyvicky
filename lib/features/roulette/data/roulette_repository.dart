@@ -86,6 +86,34 @@ class RouletteRepository {
           'winnerId': null,
           'targetRotation': null,
           'spinStartedAt': null,
+          'gameUrl': null,
+          'gameUrlSetAt': null,
+        });
+  }
+
+  Future<void> setGameUrl(String groupId, String gameUrl, String userId) async {
+    await _firestore
+        .collection('groups')
+        .doc(groupId)
+        .collection('roulette')
+        .doc('state')
+        .set({
+          'status': 'idle',
+          'gameUrl': gameUrl,
+          'gameUrlSetAt': DateTime.now().toIso8601String(),
+          'gameUrlSetBy': userId,
+        }, SetOptions(merge: true));
+  }
+
+  Future<void> clearGameUrl(String groupId) async {
+    await _firestore
+        .collection('groups')
+        .doc(groupId)
+        .collection('roulette')
+        .doc('state')
+        .update({
+          'gameUrl': null,
+          'gameUrlSetAt': null,
         });
   }
 }
