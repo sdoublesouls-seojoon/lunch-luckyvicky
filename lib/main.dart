@@ -48,15 +48,24 @@ class _LunchLuckyAppState extends ConsumerState<LunchLuckyApp> {
           final message = Map<String, dynamic>.from(data);
 
           if (message['type'] == 'LUCKY_VICKY_FINISH_SESSION') {
-            _handleLuckyLatteSessionEnd(message['winner'] as String?);
+            _handleLuckyLatteSessionEnd(
+              message['winner'] as String?,
+              message['groupId'] as String?,
+            );
           }
         } catch (_) {}
       }).toJS,
     );
   }
 
-  Future<void> _handleLuckyLatteSessionEnd(String? winnerNickname) async {
-    final groupId = ref.read(currentGroupIdProvider);
+  Future<void> _handleLuckyLatteSessionEnd(
+    String? winnerNickname,
+    String? messageGroupId,
+  ) async {
+    // postMessage의 groupId 우선 사용, fallback으로 currentGroupIdProvider
+    final groupId = (messageGroupId?.isNotEmpty == true)
+        ? messageGroupId!
+        : ref.read(currentGroupIdProvider);
     if (groupId == null) return;
 
     // 1. gameUrl 클리어
