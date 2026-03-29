@@ -61,7 +61,7 @@ class _CountdownTimerWidgetState extends State<CountdownTimerWidget> {
   Widget build(BuildContext context) {
     if (_timeoutTriggered) {
       return const Text(
-        '자동 수락됨 ✓',
+        '자동 찬성됨 ✓',
         style: TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.bold,

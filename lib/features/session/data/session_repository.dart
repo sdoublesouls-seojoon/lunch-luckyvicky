@@ -108,7 +108,7 @@ class SessionRepository {
         .update({'status': 'cancelled'});
   }
 
-  Future<void> vetoRestaurant(
+  Future<void> voteReject(
     String groupId,
     String sessionId,
     String userId,
@@ -126,44 +126,33 @@ class SessionRepository {
       if (!sessionSnapshot.exists) return;
 
       final session = Session.fromMap(sessionSnapshot.data()!, sessionRef.id);
+      if (session.status != 'vetoing') return;
 
-      // Add penalty to user
-      final userRef = _firestore.collection('users').doc(userId);
-      transaction.update(userRef, {'vetoCount': FieldValue.increment(1)});
+      final updatedVetoes = Map<String, String>.from(session.vetoes)
+        ..[userId] = reason;
 
-      // Pick next restaurant
-      final nextRestaurant = _pickRandomRestaurant(
-        availableRestaurants,
-        session.previousRestaurantIds,
-        mustEatRestaurantIds: session.mustEatRestaurantIds,
-      );
+      final totalVotes = updatedVetoes.length + session.acceptances.length;
 
-      if (nextRestaurant == null) {
-        transaction.update(sessionRef, {
-          'status': 'failed', // No more restaurants
-        });
+      if (totalVotes >= session.attendingUserIds.length) {
+        _applyMajorityDecision(
+          transaction, sessionRef, session,
+          updatedVetoes, session.acceptances,
+          availableRestaurants,
+        );
         return;
       }
 
-      final updatedPrevious = List<String>.from(session.previousRestaurantIds)
-        ..add(nextRestaurant.id);
-
       transaction.update(sessionRef, {
-        'selectedRestaurantId': nextRestaurant.id,
-        'vetoes': {}, // Reset vetoes for the new restaurant
-        'acceptances': {}, // Reset acceptances
-        'previousRestaurantIds': updatedPrevious,
-        'expiresAt': DateTime.now()
-            .add(const Duration(seconds: 30))
-            .toIso8601String(),
+        'vetoes': updatedVetoes,
       });
     });
   }
 
-  Future<void> acceptRestaurant(
+  Future<void> voteAccept(
     String groupId,
     String sessionId,
     String userId,
+    List<Restaurant> availableRestaurants,
   ) async {
     return _firestore.runTransaction((transaction) async {
       final sessionRef = _firestore
@@ -176,24 +165,85 @@ class SessionRepository {
       if (!sessionSnapshot.exists) return;
 
       final session = Session.fromMap(sessionSnapshot.data()!, sessionRef.id);
+      if (session.status != 'vetoing') return;
+
       final updatedAcceptances = Map<String, bool>.from(session.acceptances)
         ..[userId] = true;
 
-      final documentUpdates = <String, dynamic>{
-        'acceptances': updatedAcceptances,
-      };
+      final totalVotes = session.vetoes.length + updatedAcceptances.length;
 
-      // If everyone accepted, move to menu selection
-      if (updatedAcceptances.length >= session.attendingUserIds.length) {
-        documentUpdates['status'] = 'menu_selecting';
-        documentUpdates['menuSelections'] = {};
-        documentUpdates['expiresAt'] = DateTime.now()
-            .add(const Duration(seconds: 10))
-            .toIso8601String();
+      if (totalVotes >= session.attendingUserIds.length) {
+        _applyMajorityDecision(
+          transaction, sessionRef, session,
+          session.vetoes, updatedAcceptances,
+          availableRestaurants,
+        );
+        return;
       }
 
-      transaction.update(sessionRef, documentUpdates);
+      transaction.update(sessionRef, {
+        'acceptances': updatedAcceptances,
+      });
     });
+  }
+
+  void _applyMajorityDecision(
+    Transaction transaction,
+    DocumentReference sessionRef,
+    Session session,
+    Map<String, String> vetoes,
+    Map<String, bool> acceptances,
+    List<Restaurant> availableRestaurants,
+  ) {
+    final rejectCount = vetoes.length;
+    final acceptCount = acceptances.length;
+
+    if (acceptCount > rejectCount) {
+      // 과반수 찬성 → 메뉴 선택 단계로 이동
+      transaction.update(sessionRef, {
+        'acceptances': acceptances,
+        'vetoes': vetoes,
+        'status': 'menu_selecting',
+        'menuSelections': {},
+        'expiresAt': DateTime.now()
+            .add(const Duration(seconds: 10))
+            .toIso8601String(),
+      });
+    } else {
+      // 과반수 반대 (동률 포함) → 반대자 전원 패널티 + 다음 식당
+      for (final rejectorId in vetoes.keys) {
+        final userRef = _firestore.collection('users').doc(rejectorId);
+        transaction.update(userRef, {'vetoCount': FieldValue.increment(1)});
+      }
+
+      final nextRestaurant = _pickRandomRestaurant(
+        availableRestaurants,
+        session.previousRestaurantIds,
+        mustEatRestaurantIds: session.mustEatRestaurantIds,
+      );
+
+      if (nextRestaurant == null) {
+        transaction.update(sessionRef, {
+          'vetoes': vetoes,
+          'acceptances': acceptances,
+          'status': 'failed',
+        });
+        return;
+      }
+
+      final updatedPrevious = List<String>.from(session.previousRestaurantIds)
+        ..add(nextRestaurant.id);
+
+      transaction.update(sessionRef, {
+        'selectedRestaurantId': nextRestaurant.id,
+        'vetoes': {},
+        'acceptances': {},
+        'previousRestaurantIds': updatedPrevious,
+        'expiresAt': DateTime.now()
+            .add(const Duration(seconds: 30))
+            .toIso8601String(),
+      });
+    }
   }
 
   Future<void> completeSession(

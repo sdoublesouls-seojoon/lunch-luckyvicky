@@ -190,7 +190,8 @@ class SuggestionScreen extends ConsumerWidget {
               );
               final hasVetoed = session.vetoes.containsKey(user?.uid);
               final hasAccepted = session.acceptances.containsKey(user?.uid);
-              final canVote = isMeAttending && !hasVetoed;
+              final hasVoted = hasVetoed || hasAccepted;
+              final canVote = isMeAttending && !hasVoted;
 
               // Must Eat 요청자 확인
               final mustEatRequesters = members
@@ -215,10 +216,11 @@ class SuggestionScreen extends ConsumerWidget {
                           onTimeout: () {
                             ref
                                 .read(sessionRepositoryProvider)
-                                .acceptRestaurant(
+                                .voteAccept(
                                   currentGroupId!,
                                   session.id,
                                   user!.uid,
+                                  restaurants,
                                 );
                           },
                         ),
@@ -301,7 +303,7 @@ class SuggestionScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 32),
                       Text(
-                        '수락 현황: ${session.acceptances.length} / ${session.attendingUserIds.length}',
+                        '투표 현황: ${session.acceptances.length + session.vetoes.length} / ${session.attendingUserIds.length}',
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -313,46 +315,46 @@ class SuggestionScreen extends ConsumerWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
                             FloatingActionButton.extended(
-                              heroTag: 'veto',
-                              onPressed: hasAccepted
-                                  ? null
-                                  : () {
-                                      ref
-                                          .read(sessionRepositoryProvider)
-                                          .vetoRestaurant(
-                                            currentGroupId!,
-                                            session.id,
-                                            user!.uid,
-                                            '그냥 싫음', // Optional reason
-                                            restaurants,
-                                          );
-                                    },
+                              heroTag: 'reject',
+                              onPressed: () {
+                                ref
+                                    .read(sessionRepositoryProvider)
+                                    .voteReject(
+                                      currentGroupId!,
+                                      session.id,
+                                      user!.uid,
+                                      '반대',
+                                      restaurants,
+                                    );
+                              },
                               backgroundColor: Colors.red.shade100,
                               foregroundColor: Colors.red.shade900,
                               icon: const Icon(Icons.thumb_down),
-                              label: const Text('거부 (패널티)'),
+                              label: const Text('반대 (패널티)'),
                             ),
                             FloatingActionButton.extended(
                               heroTag: 'accept',
-                              onPressed: hasAccepted
-                                  ? null
-                                  : () {
-                                      ref
-                                          .read(sessionRepositoryProvider)
-                                          .acceptRestaurant(
-                                            currentGroupId!,
-                                            session.id,
-                                            user!.uid,
-                                          );
-                                    },
+                              onPressed: () {
+                                ref
+                                    .read(sessionRepositoryProvider)
+                                    .voteAccept(
+                                      currentGroupId!,
+                                      session.id,
+                                      user!.uid,
+                                      restaurants,
+                                    );
+                              },
                               backgroundColor: Colors.green.shade100,
                               foregroundColor: Colors.green.shade900,
                               icon: const Icon(Icons.thumb_up),
-                              label: hasAccepted
-                                  ? const Text('수락 완료')
-                                  : const Text('수락'),
+                              label: const Text('찬성'),
                             ),
                           ],
+                        )
+                      else if (isMeAttending && hasVoted)
+                        const Text(
+                          '투표 완료! 다른 참여자를 기다리는 중...',
+                          style: TextStyle(fontSize: 16, color: Colors.grey),
                         )
                       else if (!isMeAttending)
                         const Text('세션에 참여하지 않았습니다.'),
