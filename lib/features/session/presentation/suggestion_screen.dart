@@ -210,6 +210,7 @@ class SuggestionScreen extends ConsumerWidget {
                       const SizedBox(height: 8),
                       if (canVote)
                         CountdownTimerWidget(
+                          key: ValueKey(session.expiresAt),
                           expiresAt:
                               session.expiresAt?.toLocal() ??
                               DateTime.now().add(const Duration(seconds: 30)),

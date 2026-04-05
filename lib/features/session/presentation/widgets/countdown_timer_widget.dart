@@ -29,6 +29,17 @@ class _CountdownTimerWidgetState extends State<CountdownTimerWidget> {
     _timer = Timer.periodic(const Duration(seconds: 1), (_) => _updateTime());
   }
 
+  @override
+  void didUpdateWidget(CountdownTimerWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.expiresAt != widget.expiresAt) {
+      _timer?.cancel();
+      _timeoutTriggered = false;
+      _updateTime();
+      _timer = Timer.periodic(const Duration(seconds: 1), (_) => _updateTime());
+    }
+  }
+
   void _updateTime() {
     final now = DateTime.now();
     if (now.isAfter(widget.expiresAt)) {

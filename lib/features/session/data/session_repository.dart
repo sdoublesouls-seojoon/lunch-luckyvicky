@@ -24,8 +24,7 @@ class SessionRepository {
             snapshot.docs.first.id,
           );
           // 취소/실패된 세션은 null 처리 (홈 화면이 깨끗하게 초기화됨)
-          if (latestSession.status == 'cancelled' ||
-              latestSession.status == 'failed') {
+          if (latestSession.status == 'cancelled') {
             return null;
           }
           return latestSession;
