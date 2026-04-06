@@ -211,8 +211,12 @@ class SessionRepository {
     } else {
       // 과반수 반대 (동률 포함) → 반대자 전원 패널티 + 다음 식당
       for (final rejectorId in vetoes.keys) {
-        final userRef = _firestore.collection('users').doc(rejectorId);
-        transaction.update(userRef, {'vetoCount': FieldValue.increment(1)});
+        final memberRef = _firestore
+            .collection('groups')
+            .doc(session.groupId)
+            .collection('members')
+            .doc(rejectorId);
+        transaction.update(memberRef, {'vetoCount': FieldValue.increment(1)});
       }
 
       final nextRestaurant = _pickRandomRestaurant(

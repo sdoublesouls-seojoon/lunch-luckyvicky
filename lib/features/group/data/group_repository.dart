@@ -360,9 +360,7 @@ class GroupRepository {
 
     final batch = _firestore.batch();
     for (final memberDoc in membersSnap.docs) {
-      final userId = memberDoc.id;
-      final userRef = _firestore.collection('users').doc(userId);
-      batch.update(userRef, {'vetoCount': 0});
+      batch.update(memberDoc.reference, {'vetoCount': 0});
     }
     await batch.commit();
   }

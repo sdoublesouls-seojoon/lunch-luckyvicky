@@ -44,13 +44,15 @@ final rouletteParticipantsProvider = FutureProvider<List<RouletteParticipant>>((
   final vetoMultiplier = currentGroup?.vetoWeightMultiplier ?? 0.5;
 
   for (final member in attendingMembers) {
-    final userDoc = await firestore
-        .collection('users')
+    final memberDoc = await firestore
+        .collection('groups')
+        .doc(currentGroup!.id)
+        .collection('members')
         .doc(member.userId)
         .get();
-    final vetoCount = userDoc.data()?['vetoCount'] as int? ?? 0;
+    final vetoCount = memberDoc.data()?['vetoCount'] as int? ?? 0;
 
-    final isWeightedMode = currentGroup?.drawMode == 'weighted';
+    final isWeightedMode = currentGroup!.drawMode == 'weighted';
     final baseWeight = isWeightedMode ? member.baseWeight : 1.0;
 
     // Base weight, plus multiplier for each veto
